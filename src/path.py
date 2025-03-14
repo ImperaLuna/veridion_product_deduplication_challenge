@@ -16,6 +16,7 @@ class DataPaths(types.SimpleNamespace):
     parquet_processed_dir = parquet_dir / 'processed'
     parquet_clean_data_dir = parquet_processed_dir / '1_clean'
     parquet_merge_url_title_dir = parquet_processed_dir / '2_merge_url_title'
+    parquet_merge_title_domain_dir = parquet_processed_dir / '3_merge_title_domain'
 
 
     # Visualization data (CSV)
@@ -26,9 +27,13 @@ class DataPaths(types.SimpleNamespace):
     visualization_processed_dir = visualization_dir / 'processed'
     visualization_clean_data_dir = visualization_processed_dir / '1_clean'
     visualization_merge_url_title_dir = visualization_processed_dir / '2_merge_url_title'
+    visualization_merge_title_domain_dir = visualization_processed_dir / '3_merge_title_domain'
 
     # Test folder
     test_folder = data_dir / 'test'
+
+    # Error Folder
+    error_folder = data_dir / 'error'
 
     # File paths
     file_parquet_original = parquet_raw_dir / 'veridion_product_deduplication_challenge.snappy.parquet'

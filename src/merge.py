@@ -25,7 +25,9 @@ Data Preservation Strategy:
 import pandas as pd
 import numpy as np
 import json
-from typing import Dict, Callable, List, Union, Set, Optional, Any, TypeVar, cast
+from typing import Dict, Callable, List, Union, Set, Optional, Any, TypeVar
+
+from src.path import DataPaths
 
 # Type aliases for better readability
 ArrayLike = Union[np.ndarray, List[Any]]
@@ -347,27 +349,18 @@ def get_array_aggregation_dict() -> Dict[str, Callable[[ValueSeries], np.ndarray
 
     return agg_dict
 
+
 def merge_dataframe_rows(df: pd.DataFrame, key_column: str) -> pd.DataFrame:
     """
     Merge rows in a DataFrame that share the same key value.
-
-    This function uses specialized merging strategies for different column types:
-    - Scalar columns: Uses specific functions for text, domains, etc.
-    - Array columns: Handles both simple arrays and dictionary arrays
-
-    Each column is aggregated using a specialized function appropriate for its data type
-    and semantic meaning. The function automatically handles columns not explicitly
-    defined by using a default 'first value' aggregation.
+    Logs any merging errors to a CSV file in the error folder for later analysis.
 
     Parameters:
         df: DataFrame to merge
         key_column: Column to use as the grouping key
 
     Returns:
-        DataFrame with merged rows
-
-    Raises:
-        ValueError: If key_column is not found in the DataFrame
+        DataFrame with merged rows (problematic groups excluded)
     """
     # Check if key_column exists in DataFrame
     if key_column not in df.columns:
@@ -377,30 +370,86 @@ def merge_dataframe_rows(df: pd.DataFrame, key_column: str) -> pd.DataFrame:
     if df.empty:
         return df.copy()
 
-    # Get aggregation dictionaries for both scalar and array columns
-    scalar_agg_dict: Dict[str, Callable] = get_scalar_aggregation_dict()
-    array_agg_dict: Dict[str, Callable] = get_array_aggregation_dict()
+    # Set up error log path
+    error_log_path = DataPaths.error_folder / "merge_errors.csv"
 
-    # Combine both dictionaries
-    agg_dict: Dict[str, Callable] = {**scalar_agg_dict, **array_agg_dict}
+    # Get aggregation dictionaries
+    scalar_agg_dict = get_scalar_aggregation_dict()
+    array_agg_dict = get_array_aggregation_dict()
+    agg_dict = {**scalar_agg_dict, **array_agg_dict}
 
-    # Remove the key column from aggregation if it's in any of the dictionaries
+    # Remove the key column from aggregation if needed
     if key_column in agg_dict:
         del agg_dict[key_column]
 
-    # For any columns that don't have an aggregation function,
-    # use a simple first() aggregation
+    # For any columns without an aggregation function, use first() aggregation
     for col in df.columns:
         if col != key_column and col not in agg_dict:
             agg_dict[col] = lambda x: x.iloc[0] if not x.empty else None
 
-    # Group by key_column and apply aggregation
-    result_df: pd.DataFrame = df.groupby(key_column, as_index=False).agg(agg_dict)
+    # Process each group individually
+    groups = df.groupby(key_column)
+    result_rows = []
+    error_groups = []
+
+    for key, group in groups:
+        row_data = {key_column: key}
+        error_found = False
+        error_info = None
+
+        for col, agg_func in agg_dict.items():
+            try:
+                # Apply the aggregation function
+                row_data[col] = agg_func(group[col])
+            except ValueError as e:
+                error_message = str(e)
+                if error_message in ['Different root_domain values', 'Different eco_friendly values']:
+                    # Create error metadata
+                    error_info = {
+                        'error_message': error_message,
+                        'error_column': col,
+                        'group_size': len(group),
+                        'timestamp': pd.Timestamp.now(),
+                        'conflicting_values': '|'.join(str(v) for v in group[col].unique() if pd.notna(v))
+                    }
+
+                    error_found = True
+                    break
+                else:
+                    # Re-raise unexpected errors
+                    raise
+
+        if error_found and error_info is not None:
+            # For error groups, save all original rows with additional error info columns
+            group_copy = group.copy()
+
+            # Add error metadata columns at the beginning
+            for col_name in ['error_message', 'error_column', 'group_size', 'timestamp', 'conflicting_values']:
+                group_copy.insert(0, col_name, error_info[col_name])
+
+            error_groups.append(group_copy)
+        else:
+            result_rows.append(row_data)
+
+    # Save errors to CSV if any were found
+    if error_groups:
+        # Add a warning message
+        print(f"WARNING: Found {len(error_groups)} groups with merge conflicts!")
+
+        # Combine all error groups into one DataFrame
+        error_df = pd.concat(error_groups, ignore_index=True)
+
+        # Save to the error log file
+        error_df.to_csv(error_log_path, index=False)
+
+        print(f"Logged {len(error_df)} rows with merge errors to {error_log_path}")
+
+    # Convert the result rows to a DataFrame
+    result_df = pd.DataFrame(result_rows) if result_rows else pd.DataFrame(columns=df.columns)
 
     # Handle potential None values in array columns
     for col in array_agg_dict:
         if col in result_df.columns:
-            # Replace None with empty arrays
             result_df[col] = result_df[col].apply(
                 lambda x: np.array([]) if x is None else x
             )
