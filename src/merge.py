@@ -219,27 +219,26 @@ def get_scalar_aggregation_dict() -> Dict[str, Callable[[ValueSeries], Optional[
 
 # ========== Array Column Handling Functions ==========
 
-def merge_array_simple(values: ValueSeries) -> np.ndarray:
+def merge_array_simple(values: ValueSeries) -> list:
     """
     Merge arrays by concatenating all elements and removing duplicates.
 
-    Handles both numpy arrays and python lists, returning a single numpy array
-    with all unique elements from all input arrays.
+    Returns a list instead of numpy array to avoid PyArrow conversion issues.
 
     Parameters:
         values: Series containing arrays (numpy arrays or lists)
 
     Returns:
-        Numpy array with all unique elements merged
+        List with all unique elements merged
     """
     if values.empty:
-        return np.array([])
+        return []
 
     # Collect all non-empty arrays
     all_elements: List[Any] = []
     for arr in values:
         if isinstance(arr, np.ndarray) and len(arr) > 0:
-            all_elements.extend(arr)
+            all_elements.extend(arr.tolist())  # Convert numpy array to list
         elif isinstance(arr, list) and len(arr) > 0:
             all_elements.extend(arr)
 
@@ -253,9 +252,9 @@ def merge_array_simple(values: ValueSeries) -> np.ndarray:
             if item not in unique_elements:
                 unique_elements.append(item)
 
-    return np.array(unique_elements)
+    return unique_elements  # Return as list instead of numpy array
 
-def merge_arrays_dictionary(values: ValueSeries) -> np.ndarray:
+def merge_arrays_dictionary(values: ValueSeries) -> list:
     """
     Merge arrays containing dictionaries by combining all unique dictionaries.
 
@@ -266,10 +265,10 @@ def merge_arrays_dictionary(values: ValueSeries) -> np.ndarray:
         values: Series containing arrays of dictionaries (numpy arrays or lists)
 
     Returns:
-        Numpy array with all unique dictionaries merged
+        List with all unique dictionaries merged
     """
     if values.empty:
-        return np.array([])
+        return []
 
     # Collect all non-empty arrays of dictionaries
     all_dictionaries: List[Dict[str, Any]] = []
@@ -298,7 +297,7 @@ def merge_arrays_dictionary(values: ValueSeries) -> np.ndarray:
             seen_json_strings.add(json_str)
             unique_dicts.append(dictionary)
 
-    return np.array(unique_dicts)
+    return unique_dicts  # Return as list instead of numpy array
 
 def get_array_aggregation_dict() -> Dict[str, Callable[[ValueSeries], np.ndarray]]:
     """

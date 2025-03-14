@@ -60,4 +60,6 @@ have   multiple products located on the same `root_domain`, but we identify them
 descriptive enough. We are going to use `root_domain` again in order to make sure that there are not 2 products with the
 same title on 2 different domains.
 
-  
+#### What do we take home 
+
+parquet, numpy and data types

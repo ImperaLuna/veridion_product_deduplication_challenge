@@ -15,6 +15,7 @@ class DataPaths(types.SimpleNamespace):
 
     parquet_processed_dir = parquet_dir / 'processed'
     parquet_clean_data_dir = parquet_processed_dir / '1_clean'
+    parquet_merge_url_title_dir = parquet_processed_dir / '2_merge_url_title'
 
 
     # Visualization data (CSV)
@@ -24,6 +25,7 @@ class DataPaths(types.SimpleNamespace):
 
     visualization_processed_dir = visualization_dir / 'processed'
     visualization_clean_data_dir = visualization_processed_dir / '1_clean'
+    visualization_merge_url_title_dir = visualization_processed_dir / '2_merge_url_title'
 
     # Test folder
     test_folder = data_dir / 'test'
