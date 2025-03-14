@@ -27,13 +27,23 @@ working with and creating a function to properly merge the rows.
     * Integer - Use the maximum value (Note: this is not ideal for `manufacturing_year`, where all values are -1). 
     If I knew how the data should look, I would implement date validation using the datetime library
     * Lists / Arrays - Concatenate unique elements into a single list 
+    * Dictionaries - 
     * None value - Replace with non-null values when available
 
     * ###### For the unspsc field (string type), I concatenated different values with a "|" separator to preserve all potentially important data.
 
   * Cleaning Data
-    * column `energy_efficiency` is a dictionary, there are other columns in the dataset that contains dictionaries but 
-    they are all located inside a list, in order to keep consistency over the data we are going to convert it into a list also.
+    * column `energy_efficiency` is a dictionary, there are other columns in the dataset that contains dictionaries however 
+    they are all located inside a list, in order to keep consistency over the data, and avoid complex logic to concatenated 
+    dictionaries we are going to convert it into a list also.
+  * Analysing Arrays
+    * After we analysed the data we can divide the arrays columns into 2 entities : simple arrays containing only `strings` 
+    and arrays containing `dictionaries`.
+  
+  * Merging dictionaries
+    * After careful consideration and inspection of dataset I determined the best way to merge multiple entries that have
+    dictionaries is to add all the unique ones into the list. Downside to this approach is that we might add extra size to
+    our dataset but in return we maintain data integrity. 
 
 #### Steps
 After visualizing the data with jupyter notebook I believe the solution has to be a multistep process.
