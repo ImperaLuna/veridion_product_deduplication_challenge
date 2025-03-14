@@ -1,40 +1,52 @@
 from pathlib import Path
+import types
 
-# Define project root
-SCRIPT_PATH = Path(__file__).resolve()
-PROJECT_ROOT = SCRIPT_PATH.parent.parent
+class DataPaths(types.SimpleNamespace):
+    SCRIPT_PATH = Path(__file__)
+    PROJECT_ROOT = SCRIPT_PATH.parent.parent
 
-# Define data directories
-data_dir = PROJECT_ROOT / 'data'
+    # Define data directories
+    data_dir = PROJECT_ROOT / 'data'
 
-# Original raw data (snappy parquet)
-parquet_dir = data_dir / 'parquet'
-parquet_raw_dir = parquet_dir / 'raw'
-parquet_final_dir = parquet_dir / 'final'
+    # Original raw data (snappy parquet)
+    parquet_dir = data_dir / 'parquet'
+    parquet_raw_dir = parquet_dir / 'raw'
+    parquet_final_dir = parquet_dir / 'final'
 
-parquet_processed_dir = parquet_dir / 'processed'
-parquet_clean_data_dir = parquet_processed_dir / '1_clean'
-
-
-
-# Visualization data (CSV)
-visualization_dir = data_dir / 'visualization'
-visualization_raw_dir = visualization_dir / 'raw'
-visualization_final_dir = visualization_dir / 'final'
-
-visualization_processed_dir = visualization_dir / 'processed'
-visualization_clean_data_dir = visualization_processed_dir / '1_clean'
+    parquet_processed_dir = parquet_dir / 'processed'
+    parquet_clean_data_dir = parquet_processed_dir / '1_clean'
+    parquet_merge_url_title_dir = parquet_processed_dir / '2_merge_url_title'
 
 
-# Ensure directories exist
-for dir_path in [
-    parquet_dir, parquet_raw_dir, parquet_processed_dir, parquet_final_dir,parquet_clean_data_dir,
-    visualization_dir, visualization_raw_dir, visualization_processed_dir, visualization_final_dir, visualization_clean_data_dir
-]:
-    dir_path.mkdir(exist_ok=True, parents=True)
+    # Visualization data (CSV)
+    visualization_dir = data_dir / 'visualization'
+    visualization_raw_dir = visualization_dir / 'raw'
+    visualization_final_dir = visualization_dir / 'final'
 
-# File paths
-parquet_original = parquet_raw_dir / 'veridion_product_deduplication_challenge.snappy.parquet'
+    visualization_processed_dir = visualization_dir / 'processed'
+    visualization_clean_data_dir = visualization_processed_dir / '1_clean'
+    visualization_merge_url_title_dir = visualization_processed_dir / '2_merge_url_title'
 
-# Output paths for CSV files
-csv_original_path = visualization_raw_dir / 'original_data.csv'
+    # Test folder
+    test_folder = data_dir / 'test'
+
+    # File paths
+    file_parquet_original = parquet_raw_dir / 'veridion_product_deduplication_challenge.snappy.parquet'
+    file_parquet_clean = parquet_clean_data_dir / 'clean_data.snappy.parquet'
+
+
+
+    @classmethod
+    def ensure_dirs_exist(cls):
+        """Ensure directories exist by creating them if necessary."""
+        all_dirs = [
+            value for key, value in vars(cls).items()
+            if isinstance(value, Path) and not value.suffix  # Only directories (no file extensions)
+        ]
+        for dir_path in all_dirs:
+            dir_path.mkdir(parents=True, exist_ok=True)
+
+
+if __name__ == "__main__":
+    DataPaths.ensure_dirs_exist()
+

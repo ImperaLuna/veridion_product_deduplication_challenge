@@ -26,7 +26,8 @@ def get_actual_type(value):
     return type(value).__name__
 
 def print_detailed_info(df):
-    # Print header
+    print(f"Original dataset: {len(df):,} rows")
+    print(f"Number of columns in the DataFrame: {len(df.columns)}")
     print(f"Data columns (total {len(df.columns)} columns):")
     print(f" #   {'Column':<36} {'Actual type':<15} {'Preview'}")
     print(f"---  {'-'*36} {'-'*16} {'-'*50}")
