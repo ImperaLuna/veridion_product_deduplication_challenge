@@ -77,6 +77,7 @@ and arrays containing `dictionaries`.
 the unique ones into the list. The downside to this approach is that we might add extra 
 size to our dataset, but in return, we maintain data integrity.
 
+
 | Data Type                            | Merging Strategy                                                                                                                            |
 |--------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
 | **strings**                          | Keep the longest string to retain maximum detail. Unless otherwise specified below.                                                         |
@@ -88,9 +89,9 @@ size to our dataset, but in return, we maintain data integrity.
 | **lists**                            | Concatenate unique elements into a single list.                                                                                             |
 | **dicts**                            | Concatenate all unique dictionaries into a single list.                                                                                     |
 | **none values**                      | Replace with non-null values when available.                                                                                                |
+                                                                                   
+#### ValueErrors. Why do we raise them and how do we handle them
 
-
-#### ValueErrors. Why do we raise them and how we handle them
 
 In this solution, there are two functions that raise `ValueError`: `merge_eco_friendly` and `merge_root_domain`. 
 Both of these functions use ValueError to catch and handle cases where rows should not be merged due to logical
