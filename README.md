@@ -87,7 +87,7 @@ size to our dataset, but in return, we maintain data integrity.
 | **none values**                  | Replace with non-null values when available.                                                                                            |
 
 
-#### ValueErrors. Why do we raise them and how we handle them
+#### ValueErrors. Why do we raise them and how do we handle them
 
 In this solution, there are two functions that raise `ValueError`: `merge_eco_friendly` and `merge_root_domain`. 
 Both of these functions use ValueError to catch and handle cases where rows should not be merged due to logical
