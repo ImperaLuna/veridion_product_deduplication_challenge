@@ -80,7 +80,7 @@ size to our dataset, but in return, we maintain data integrity.
 | **root_domain<br/>(str)**        | if non unique → raise `ValueError`.                                                                                                     |
 | **page_url<br/>(str)**           | Keep the shortest string for clarity and redundancy reduction.                                                                          |
 | **unspsc<br/>(str)**             | Concatenated different values with " \| " separator to preserve all potentially important data.                                         |                                                                                                                                  |
-| **eco_friendly<br/>(bool)**      | None and True → `True`, <br/>None and False → `False`, <br/>None and None → `None`, <br/>True and False → raise `ValueError`.           |
+| **eco_friendly<br/>(bool)**      | None and True → `True`, <br/>None and False → `False`, <br/>True and False → raise `ValueError`.           |
 | **manufacturing_year<br/>(int)** | Use the maximum value, not ideal.<br/>If I knew how the data should look, I would implement date validation using the datetime library. |
 | **lists**                        | Concatenate unique elements into a single list.                                                                                         |
 | **dicts**                        | Concatenate all unique dictionaries into a single list.                                                                                 |
