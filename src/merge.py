@@ -354,6 +354,7 @@ def merge_dataframe_rows(df: pd.DataFrame, key_column: str) -> pd.DataFrame:
     """
     Merge rows in a DataFrame that share the same key value.
     Logs any merging errors to a CSV file in the error folder for later analysis.
+    Appends to the existing error log if one exists.
 
     Parameters:
         df: DataFrame to merge
@@ -439,8 +440,12 @@ def merge_dataframe_rows(df: pd.DataFrame, key_column: str) -> pd.DataFrame:
         # Combine all error groups into one DataFrame
         error_df = pd.concat(error_groups, ignore_index=True)
 
-        # Save to the error log file
-        error_df.to_csv(error_log_path, index=False)
+        # Check if error log already exists
+        mode = 'a' if error_log_path.exists() else 'w'
+        header = not error_log_path.exists()
+
+        # Append to the error log file if it exists, otherwise create new file
+        error_df.to_csv(error_log_path, mode=mode, header=header, index=False)
 
         print(f"Logged {len(error_df)} rows with merge errors to {error_log_path}")
 
