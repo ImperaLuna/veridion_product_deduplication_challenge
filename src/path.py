@@ -31,6 +31,7 @@ class DataPaths(types.SimpleNamespace):
 
     # Test folder
     test_folder = data_dir / 'test'
+    test_parquet = test_folder / 'test_merged_columns.snappy.parquet'
 
     # Error Folder
     error_folder = data_dir / 'error'
@@ -38,6 +39,7 @@ class DataPaths(types.SimpleNamespace):
     # File paths
     file_parquet_original = parquet_raw_dir / 'veridion_product_deduplication_challenge.snappy.parquet'
     file_parquet_clean = parquet_clean_data_dir / 'clean_data.snappy.parquet'
+    file_parquet_final = parquet_final_dir / 'final_data.snappy.parquet'
 
 
 
