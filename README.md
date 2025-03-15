@@ -21,7 +21,7 @@ Just a heads-up: this isn't a step-by-step solution, but more like a battle log 
 * Pandas: For efficient data handling and manipulation
 
 ### Approach:
-###### Understanding the data and cleaning it
+#### Understanding the data and cleaning it
 
 Sadly we are lacking enough information about the dataset and, its usage so below are more like educated guesses of
 what should we do rather than an actual "best-in-case" approach
@@ -31,7 +31,7 @@ they are all located inside a list, in order to keep consistency over the data, 
 dictionaries we are going to convert it into a list also. - Later edit : this is no longer required since I created 
 robust solution for merging dictionary arrays but this will be kept for data consistency.
 
-###### Possibility of removing some columns
+#### Possibility of removing some columns
 
 Since one of the factors for this challenge is scalability we can consider removing some of the columns to improve memory
 footprint and maybe even processing speed. I will also try my best to consider data integrity, possible data usages and 
@@ -60,7 +60,7 @@ of the dataset and there seem to be a clear distinction between them, I decided 
 about these columns is that they all contain dictionaries. Normally I decided would keep them as is, however since this is 
 a challenge and the data structure allows I decided to just merge them and see what I can break :D.
 
-###### How do we merge rows?
+#### How do we merge rows?
 
 Since we know we are handling duplicate data I believe the first step should be figuring out what data types are we 
 working with and creating a function to properly merge the rows.
@@ -87,7 +87,7 @@ size to our dataset, but in return, we maintain data integrity.
 | **none values**                  | Replace with non-null values when available.                                                                                            |
 
 
-###### ValueErrors. Why do we raise them and how we handle them
+#### ValueErrors. Why do we raise them and how we handle them
 
 In this solution, there are two functions that raise `ValueError`: `merge_eco_friendly` and `merge_root_domain`. 
 Both of these functions use ValueError to catch and handle cases where rows should not be merged due to logical
