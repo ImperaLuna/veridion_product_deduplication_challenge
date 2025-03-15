@@ -149,5 +149,6 @@ Description and how it can be used to determine non duplicate rows
 
 ### Where to Find the Final Dataset
 
-The cleaned and processed dataset is available in the Release folder of this repository. You can find it in[https://github.com/ImperaLuna/veridion_product_deduplication_challenge/releases/tag/v1.0.0](Release).
+The cleaned and processed dataset is available in the Release folder of this repository. 
+You can find it in[https://github.com/ImperaLuna/veridion_product_deduplication_challenge/releases/tag/v1.0.0](Release).
 
