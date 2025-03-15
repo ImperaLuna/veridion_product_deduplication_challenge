@@ -15,13 +15,13 @@ Each row represents partial attributes of a product.
 Just a heads-up: this isn't a step-by-step solution, but more like a battle log from the trenches of problem-solving
 (cleaned up just enough so readers don’t lose their minds).
 
-###### Tools : For this task, I used Python with:
+### Tools : For this task, I used Python with:
 * Jupyter Notebook: For proof of concept and data visualization
 * Csv files for better visualization
 * Pandas: For efficient data handling and manipulation
 
 ### Approach:
-###### Understanding the data and cleaning it
+#### Understanding the data and cleaning it
 
 Sadly we are lacking enough information about the dataset and, its usage so below are more like educated guesses of
 what should we do rather than an actual "best-in-case" approach
@@ -31,7 +31,7 @@ they are all located inside a list, in order to keep consistency over the data, 
 dictionaries we are going to convert it into a list also. - Later edit : this is no longer required since I created 
 robust solution for merging dictionary arrays but this will be kept for data consistency.
 
-###### Possibility of removing some columns
+#### Possibility of removing some columns
 
 Since one of the factors for this challenge is scalability we can consider removing some of the columns to improve memory
 footprint and maybe even processing speed. I will also try my best to consider data integrity, possible data usages and 
@@ -39,7 +39,7 @@ possible future data requirements into my analysis.
 
 * Columns `root_domain` and `page_url`, since `page_url` is a more descriptive for a product and `root_domain` can be 
 pretty easily extracted from `page_url` I considered dropping `root_domain`. However, it ended up remaining on the dataset
-because it's a good column to check for products with the same name on multiple domains.
+because it's a good column to check for products with the same name on multiple domains. 
 
 * Columns `product_summary` and `description` using cosine similarity algorithm we determined a 69.51% similarity between
 the two columns. With all of the above in mind I decided to merge the 2 columns into one by keeping the longest string
@@ -57,10 +57,13 @@ of the product, with the only difference being that one is edible and one is not
 of the dataset and there seem to be a clear distinction between them, I decided the best approach is to keep them both. 
 
 * Columns `purity`, `pressure_rating` and `power_rating` they are pretty similar with the above case, the interesting aspect
-about these columns is that they all contain dictionaries. Normally I decided would keep them as is, however since this is 
-a challenge and the data structure allows I decided to just merge them and see what I can break :D.
+about these columns is that they all contain dictionaries with the same keys. I planned to keep them as they were, 
+but since this is a challenge and the data structure allows, I decided to merge them and see what I could break. :D.
+  * Later edit – We _**did**_ break things. Even though all three columns share the same dictionary keys, the purity column 
+never contains a value for `key:unit`. Since `pressure_rating` and `power_rating` also occasionally lack a unit value,
+merging them results in ambiguous data. 
 
-###### How do we merge rows?
+#### How do we merge rows?
 
 Since we know we are handling duplicate data I believe the first step should be figuring out what data types are we 
 working with and creating a function to properly merge the rows.
@@ -74,20 +77,20 @@ and arrays containing `dictionaries`.
 the unique ones into the list. The downside to this approach is that we might add extra 
 size to our dataset, but in return, we maintain data integrity.
 
-| Data Type                        | Merging Strategy                                                                                                                        |
-|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| **strings**                      | Keep the longest string to retain maximum detail. Unless otherwise specified below.                                                     |
-| **root_domain<br/>(str)**        | if non unique → raise `ValueError`.                                                                                                     |
-| **page_url<br/>(str)**           | Keep the shortest string for clarity and redundancy reduction.                                                                          |
-| **unspsc<br/>(str)**             | Concatenated different values with " \| " separator to preserve all potentially important data.                                         |                                                                                                                                  |
-| **eco_friendly<br/>(bool)**      | None and True → `True`, <br/>None and False → `False`, <br/>None and None → `None`, <br/>True and False → raise `ValueError`.           |
-| **manufacturing_year<br/>(int)** | Use the maximum value, not ideal.<br/>If I knew how the data should look, I would implement date validation using the datetime library. |
-| **lists**                        | Concatenate unique elements into a single list.                                                                                         |
-| **dicts**                        | Concatenate all unique dictionaries into a single list.                                                                                 |
-| **none values**                  | Replace with non-null values when available.                                                                                            |
+| Data Type                            | Merging Strategy                                                                                                                            |
+|--------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| **strings**                          | Keep the longest string to retain maximum detail. Unless otherwise specified below.                                                         |
+| **root_domain<br/>(str)**            | if non unique → raise `ValueError`.                                                                                                         |
+| **page_url<br/>(str)**               | Keep the shortest string for clarity and redundancy reduction.                                                                              |
+| **unspsc<br/>(str)**                 | Concatenated different values with " \| " separator to preserve all potentially important data.                                             |                                                                                                                                  |
+| **eco_friendly<br/>(bool)**          | None and True → `True`, <br/>None and False → `False`, <br/>True and False → raise `ValueError`.                                            |
+| ~~**manufacturing_year<br/>(int)**~~ | ~~Use the maximum value, not ideal.<br/>If I knew how the data should look, I would implement date validation using the datetime library.~~ |
+| **lists**                            | Concatenate unique elements into a single list.                                                                                             |
+| **dicts**                            | Concatenate all unique dictionaries into a single list.                                                                                     |
+| **none values**                      | Replace with non-null values when available.                                                                                                |
 
 
-###### ValueErrors. Why do we raise them and how we handle them
+#### ValueErrors. Why do we raise them and how we handle them
 
 In this solution, there are two functions that raise `ValueError`: `merge_eco_friendly` and `merge_root_domain`. 
 Both of these functions use ValueError to catch and handle cases where rows should not be merged due to logical
@@ -106,9 +109,7 @@ when it's logically valid. Errors are caught within the merge_dataframe_rows fun
 into a separate CSV file. This allows the function to continue processing and merging the non-conflicting rows without 
 interruption.
 
-
-
-#### Steps
+#### Steps for merging rows
 After visualizing the data with jupyter notebook I believe the solution has to be a multistep process.
 
 1. The first column that catches my eye is `page_url` since this has to be unique. 
@@ -123,11 +124,29 @@ have   multiple products located on the same `root_domain`, but we identify them
 descriptive enough. We are going to use `root_domain` again in order to make sure that there are not 2 products with the
 same title on 2 different domains.
 
+
 #### What do we take home 
 
 parquet, numpy and data types
 
+#### Food for thought
+
+Description and how it can be used to determine non duplicate rows
+
+### The Fun Part: Data About Our Data <br/>(a.k.a. Numbers That Make Us Feel Productive)
+
+
+###### DataFrame Comparison Summary
+
+| Metric    | Original | Final    | Difference   | Percentage   |
+|-----------|----------|----------|--------------|--------------|
+| Rows      | 21,946   | 19,054   | -2,892       | -13.18%      |
+| Columns   | 31       | 28       | -3           | -9.68%       |
+| Size (MB) | 10.72    | 6.79     | -3.93        | -36.70%      |
 
 
 
+### Where to Find the Final Dataset
+
+The cleaned and processed dataset is available in the Release folder of this repository. You can find it in[https://github.com/ImperaLuna/veridion_product_deduplication_challenge/releases/tag/v1.0.0](Release).
 

@@ -178,6 +178,7 @@ def merge_max_year(values: ValueSeries) -> Optional[int]:
     non_null: List[int] = [y for y in values if pd.notna(y)]
     return max(non_null) if non_null else None
 
+
 def get_scalar_aggregation_dict() -> Dict[str, Callable[[ValueSeries], Optional[ScalarValue]]]:
     """
     Create a dictionary mapping scalar columns to their aggregation functions.
@@ -185,21 +186,25 @@ def get_scalar_aggregation_dict() -> Dict[str, Callable[[ValueSeries], Optional[
     Maps each known scalar column name to the appropriate specialized
     aggregation function based on the column's data type and merging requirements.
 
+    The function will include all potential columns, and the calling function
+    will filter out those that don't exist in the actual DataFrame.
+
     Returns:
         Dictionary mapping column names to aggregation functions
     """
     # Predefined scalar columns from the dataset
     _scalar_columns: List[str] = [
-        'unspsc',                # column 0
-        'root_domain',           # column 1
-        'page_url',              # column 2
-        'product_title',         # column 3
-        'product_summary',       # column 4
-        'product_name',          # column 5
-        'brand',                 # column 7
-        'eco_friendly',          # column 10
-        'manufacturing_year',    # column 17
-        'description'            # column 30
+        'unspsc',  # column 0
+        'root_domain',  # column 1
+        'page_url',  # column 2
+        'product_title',  # column 3
+        'product_summary',  # column 4
+        'product_name',  # column 5
+        'brand',  # column 7
+        'eco_friendly',  # column 10
+        'manufacturing_year',  # column 17
+        'description',  # column 30
+        'merged_description'  # new column
     ]
 
     agg_dict: Dict[str, Callable[[ValueSeries], Optional[ScalarValue]]] = {}
@@ -210,7 +215,7 @@ def get_scalar_aggregation_dict() -> Dict[str, Callable[[ValueSeries], Optional[
             agg_dict[col] = merge_root_domain
         elif col == 'page_url':
             agg_dict[col] = merge_text_shortest  # Now using shortest URL
-        elif col in ['product_title', 'product_summary', 'product_name', 'brand', 'description']:
+        elif col in ['product_title', 'product_summary', 'product_name', 'brand', 'description', 'merged_description']:
             agg_dict[col] = merge_text_longest
         elif col == 'eco_friendly':
             agg_dict[col] = merge_eco_friendly
@@ -355,6 +360,7 @@ def merge_dataframe_rows(df: pd.DataFrame, key_column: str) -> pd.DataFrame:
     Merge rows in a DataFrame that share the same key value.
     Logs any merging errors to a CSV file in the error folder for later analysis.
     Appends to the existing error log if one exists.
+    Handles missing columns gracefully by skipping them.
 
     Parameters:
         df: DataFrame to merge
@@ -377,7 +383,16 @@ def merge_dataframe_rows(df: pd.DataFrame, key_column: str) -> pd.DataFrame:
     # Get aggregation dictionaries
     scalar_agg_dict = get_scalar_aggregation_dict()
     array_agg_dict = get_array_aggregation_dict()
-    agg_dict = {**scalar_agg_dict, **array_agg_dict}
+
+    # Combine aggregation dictionaries
+    all_agg_dict = {**scalar_agg_dict, **array_agg_dict}
+
+    # Filter aggregation dictionary to only include columns that exist in the dataframe
+    agg_dict = {col: func for col, func in all_agg_dict.items() if col in df.columns}
+
+    # Add entry for merged_description if it exists
+    if 'merged_description' in df.columns and 'merged_description' not in agg_dict:
+        agg_dict['merged_description'] = merge_text_longest
 
     # Remove the key column from aggregation if needed
     if key_column in agg_dict:
