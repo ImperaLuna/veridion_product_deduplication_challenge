@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 def merge_and_drop_descriptions(df):
     """
@@ -66,6 +65,28 @@ def drop_columns(df, columns):
 
 
 def clean_energy_efficiency(df):
+    # """
+    # Cleans the provided DataFrame by processing energy_efficiency column.
+    #
+    # Args:
+    #     df (Optional[pd.DataFrame]): The DataFrame to clean
+    #
+    # Returns:
+    #     Optional[pd.DataFrame]: The cleaned DataFrame or None if input was None
+    # """
+    # cleaned_df = df.copy()
+    #
+    # # Process the energy_efficiency column
+    # cleaned_df['energy_efficiency'] = cleaned_df['energy_efficiency'].apply(
+    #     lambda x: (
+    #         []
+    #         if x is None or (isinstance(x, list) and x == [None])
+    #         else np.array([x]) if not isinstance(x, list) else np.array(x)
+    #     )
+    # )
+    #
+    # return cleaned_df
+
     """
     Cleans the provided DataFrame by processing energy_efficiency column.
 
@@ -75,6 +96,10 @@ def clean_energy_efficiency(df):
     Returns:
         Optional[pd.DataFrame]: The cleaned DataFrame or None if input was None
     """
+    if df is None:
+        return None
+
+    # Create a copy to avoid modifying the original DataFrame
     cleaned_df = df.copy()
 
     # Process the energy_efficiency column

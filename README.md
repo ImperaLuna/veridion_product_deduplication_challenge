@@ -169,12 +169,12 @@ Description and how it can be used to determine non duplicate rows
 
 ###### DataFrame Comparison Summary
 
-| Metric                 | Original | Final  | Difference | Percentage |
-|------------------------|----------|--------|------------|------------|
-| Rows                   | 21,946   | 19,054 | -2,892     | -13.18%    |
-| Columns                | 31       | 28     | -3         | -9.68%     |
-| Size (MB)              | 10.72    | 6.79   | -3.93      | -36.70%    |
-| Processing Speed (sec) |          |        |            |            |
+| Metric              | Original | Final  | Difference | Percentage |
+|---------------------|----------|--------|------------|------------|
+| Rows                | 21,946   | 19,054 | -2,892     | -13.18%    |
+| Columns             | 31       | 27     | -4         | -12.90%    |
+| Size (MB)           | 10.72    | 7.25   | -3.47      | -32.41%    |
+| Processing Time (s) | 15.22    | 0.60   | -14.62     |  96.09%    |
 
 
 
