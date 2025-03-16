@@ -4,22 +4,6 @@ Data Merging Module
 If you're importing this module, you most likely need the merge_dataframe_rows() function,
 which serves as the main entry point for the row merging functionality.
 
-This module provides functionality for merging rows in a DataFrame that share the same key value.
-The primary function, merge_dataframe_rows, uses specialized merging strategies for different column types:
-- Scalar columns: Uses specific functions for text, domains, and other scalar values
-- Array columns: Handles both simple arrays and dictionary arrays
-
-The module implements various specialized aggregation functions to handle different data types
-and merging requirements appropriately.
-
-Data Preservation Strategy:
-- Text fields: Longest text is preserved to maintain the most detailed information
-- URLs: Shortest URL is preserved as it's typically more canonical
-- Identifiers (UNSPSC): All unique values are combined with separators
-- Arrays: All unique elements are preserved and duplicates removed
-- Dictionary arrays: Unique dictionaries are preserved based on content comparison
-- Critical fields (e.g., root_domain, eco_friendly): Values are preserved only if consistent, otherwise raises error
-- Temporal data (e.g., manufacturing_year): Latest/maximum values are kept
 """
 
 import pandas as pd
