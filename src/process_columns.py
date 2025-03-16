@@ -1,31 +1,32 @@
 import numpy as np
+import pandas as pd
+
 
 def merge_and_drop_descriptions(df):
     """
-    Merges product_summary and description columns using vectorized operations.
-    Keeps the longest string between the two columns and drops the original columns.
+    Merge description and product_summary columns based on the longest string,
+    modifying the DataFrame in place.
+
+    Args:
+        df: DataFrame with product_title, description, and product_summary columns
+
+    Returns:
+        None (modifies the DataFrame in place)
     """
-    # Use vectorized string operations instead of astype(str)
-    summary = df['product_summary'].fillna('')
-    description = df['description'].fillna('')
-
-    # Use NumPy for faster comparison
-    summary_len = summary.str.len().values
-    description_len = description.str.len().values
-
-    # Create boolean array directly with NumPy
-    use_summary = (summary_len >= description_len) & (summary_len > 0)
-
-    # Use NumPy where directly with Series values for better performance
-    df['product_description'] = np.where(
-        use_summary,
-        summary.values,
-        np.where(description_len > 0, description.values, None)
+    # Create a new column with the longest text between description and product_summary
+    df['product_description'] = df.apply(
+        lambda row: row['description'] if len(str(row['description'])) >= len(str(row['product_summary']))
+                   else row['product_summary'],
+        axis=1
     )
 
-    # Drop columns with a single operation
-    df.drop(['product_summary', 'description'], axis=1, inplace=True)
-    return df
+    # Handle any None/NaN values
+    df['product_description'] = df['product_description'].fillna('')
+
+    # Drop the original description and product_summary columns
+    df.drop(['description', 'product_summary'], axis=1, inplace=True)
+
+    return df  # Return the modified DataFrame for convenience
 
 
 def combine_materials_ingredients(df):
@@ -65,53 +66,15 @@ def drop_columns(df, columns):
 
 
 def clean_energy_efficiency(df):
-    # """
-    # Cleans the provided DataFrame by processing energy_efficiency column.
-    #
-    # Args:
-    #     df (Optional[pd.DataFrame]): The DataFrame to clean
-    #
-    # Returns:
-    #     Optional[pd.DataFrame]: The cleaned DataFrame or None if input was None
-    # """
-    # cleaned_df = df.copy()
-    #
-    # # Process the energy_efficiency column
-    # cleaned_df['energy_efficiency'] = cleaned_df['energy_efficiency'].apply(
-    #     lambda x: (
-    #         []
-    #         if x is None or (isinstance(x, list) and x == [None])
-    #         else np.array([x]) if not isinstance(x, list) else np.array(x)
-    #     )
-    # )
-    #
-    # return cleaned_df
 
-    """
-    Cleans the provided DataFrame by processing energy_efficiency column.
-
-    Args:
-        df (Optional[pd.DataFrame]): The DataFrame to clean
-
-    Returns:
-        Optional[pd.DataFrame]: The cleaned DataFrame or None if input was None
-    """
-    if df is None:
-        return None
-
-    # Create a copy to avoid modifying the original DataFrame
-    cleaned_df = df.copy()
-
-    # Process the energy_efficiency column
-    cleaned_df['energy_efficiency'] = cleaned_df['energy_efficiency'].apply(
-        lambda x: (
-            []
-            if x is None or (isinstance(x, list) and x == [None])
-            else np.array([x]) if not isinstance(x, list) else np.array(x)
-        )
+    df['energy_efficiency'] = df['energy_efficiency'].apply(
+        lambda x:
+        [] if x is None or (isinstance(x, list) and x == [None]) else
+        np.array([x]) if not isinstance(x, list) else
+        np.array(x)
     )
 
-    return cleaned_df
+    return df
 
 def clean_columns(df):
     """

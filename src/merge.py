@@ -178,6 +178,7 @@ def get_scalar_aggregation_dict() -> Dict[str, Callable[[ValueSeries], Optional[
     """
     # Predefined scalar columns from the dataset
     _scalar_columns: List[str] = [
+        'product_description',
         'unspsc',  # column 0
         'root_domain',  # column 1
         'page_url',  # column 2
@@ -201,7 +202,7 @@ def get_scalar_aggregation_dict() -> Dict[str, Callable[[ValueSeries], Optional[
             agg_dict[col] = merge_text_shortest  # Now using shortest URL
         elif col in ['product_title', 'product_summary', 'product_name', 'brand', 'description', 'merged_description']:
             agg_dict[col] = merge_text_longest
-        elif col == 'eco_friendly':
+        elif col in ['product_description','eco_friendly']:
             agg_dict[col] = merge_eco_friendly
         elif col == 'manufacturing_year':
             agg_dict[col] = merge_max_year
@@ -302,7 +303,6 @@ def get_array_aggregation_dict() -> Dict[str, Callable[[ValueSeries], np.ndarray
     """
     # Predefined lists of array columns
     _simple_arrays: List[str] = [
-        'product_description',
         'product_identifier',          # column 6
         'intended_industries',         # column 8
         'applicability',               # column 9

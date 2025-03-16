@@ -70,7 +70,7 @@ def main() -> pd.DataFrame:
         pd.DataFrame: The deduplicated DataFrame
     """
     # Load the original data
-    df = pd.read_parquet(DataPaths.test_parquet)
+    df = pd.read_parquet(DataPaths.file_parquet_original)
 
     # Clean the columns
     df = clean_columns(df)

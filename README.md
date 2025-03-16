@@ -29,7 +29,7 @@ what should we do rather than an actual "best-in-case" approach
 * Column `energy_efficiency` is a dictionary, there are other columns in the dataset that contains dictionaries however 
 they are all located inside a list, in order to keep consistency over the data, and avoid complex logic to concatenate 
 dictionaries we are going to convert it into a list also. - Later edit : this is no longer required since I created 
-robust solution for merging dictionary arrays but this will be kept for data consistency.
+robust solution for merging dictionary arrays but this will be kept for data consistency. 
 
 #### Possibility of removing some columns
 
@@ -173,8 +173,8 @@ Description and how it can be used to determine non duplicate rows
 |---------------------|----------|--------|------------|------------|
 | Rows                | 21,946   | 19,054 | -2,892     | -13.18%    |
 | Columns             | 31       | 27     | -4         | -12.90%    |
-| Size (MB)           | 10.72    | 7.25   | -3.47      | -32.41%    |
-| Processing Time (s) | 15.22    | 0.60   | -14.62     |  96.09%    |
+| Size (MB)           | 10.72    | 6.91   | -3.82      | -35.59%    |
+| Processing Time (s) | 15.22    | 0.61   | -14.72     | 96.02%     |
 
 
 
