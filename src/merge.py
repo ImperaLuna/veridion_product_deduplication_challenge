@@ -302,10 +302,12 @@ def get_array_aggregation_dict() -> Dict[str, Callable[[ValueSeries], np.ndarray
     """
     # Predefined lists of array columns
     _simple_arrays: List[str] = [
+        'product_description',
         'product_identifier',          # column 6
         'intended_industries',         # column 8
         'applicability',               # column 9
         'ethical_and_sustainability_practices',  # column 11
+        'components',
         'materials',                   # column 14
         'ingredients',                 # column 15
         'manufacturing_countries',     # column 16
