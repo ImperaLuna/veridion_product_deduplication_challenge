@@ -1,15 +1,40 @@
 # Product Data Deduplication
+
+---
+## Table of Contents
+- [Task](#task)
+- [Context](#context)
+- [Solution explanation / presentation](#solution-explanation--presentation)
+  - [Tools](#tools)
+  - [Approach](#approach)
+    - [Understanding the data and cleaning it](#understanding-the-data-and-cleaning-it)
+    - [Possibility of removing some columns](#possibility-of-removing-some-columns)
+    - [How do we merge rows?](#how-do-we-merge-rows)
+    - [ValueErrors. Why do we raise them and how do we handle them](#valueerrors-why-do-we-raise-them-and-how-do-we-handle-them)
+    - [Steps for merging rows](#steps-for-merging-rows)
+- [Output](#output)
+  - [Challenges](#challenges)
+  - [Solution](#solution)
+  - [Where to Find the Final Dataset](#where-to-find-the-final-dataset)
+- [Food for thought](#food-for-thought)
+- [The Fun Part: Data About Our Data](#the-fun-part-data-about-our-data-aka-numbers-that-make-us-feel-productive)
+  - [How did we optimize the processing](#how-did-we-optimize-the-processing) 
+
+  
+---
 ## Task
 
 The goal is to consolidate duplicate product entries into single, enriched records that maximize available information 
 while ensuring uniqueness.
 
+---
 ## Context
 
 The dataset contains product details extracted from various web pages using LLMs. 
 This extraction process resulted in duplicate entries where the same product appears across different sources.
 Each row represents partial attributes of a product.
 
+---
 ## Solution explanation / presentation
 
 Just a heads-up: this isn't a step-by-step solution, but more like a battle log from the trenches of problem-solving
@@ -28,8 +53,7 @@ what should we do rather than an actual "best-in-case" approach
 
 * Column `energy_efficiency` is a dictionary, there are other columns in the dataset that contains dictionaries however 
 they are all located inside a list, in order to keep consistency over the data, and avoid complex logic to concatenate 
-dictionaries we are going to convert it into a list also. - Later edit : this is no longer required since I created 
-robust solution for merging dictionary arrays but this will be kept for data consistency. 
+dictionaries we are going to convert it into a list also.
 
 #### Possibility of removing some columns
 
@@ -132,8 +156,7 @@ boolean type. The simplicity of the eco_friendly column makes it ideal for error
 compatible rows are merged. 
 
 `merge_root_domain`: After creating merge_eco_friendly, I realized that merging products from different root_domains makes 
-no logical sense. Therefore, I introduced a ValueError in merge_root_domain to prevent the merging of products 
-from different domains.
+no logical sense. Therefore, I introduced a ValueError to prevent the merging of products from different domains.
 
 By raising these ValueError exceptions, we preserve data integrity and ensure that the merging process only takes place 
 when it's logically valid. Errors are caught within the merge_dataframe_rows function, which logs the conflicting data 
@@ -155,17 +178,51 @@ have   multiple products located on the same `root_domain`, but we identify them
 descriptive enough. We are going to use `root_domain` again in order to make sure that there are not 2 products with the
 same title on 2 different domains.
 
+## Output
 
-#### What do we take home 
+---
+### Challenges
 
-parquet, numpy and data types
+Since the initial data was provided as a `.snappy.parquet` file, I figured the output should be same type of file.
 
-#### Food for thought
+When saving our processed DataFrame using pandas' `df.to_parquet()` method (which uses the PyArrow engine), 
+we encountered several limitations:
 
-Description and how it can be used to determine non duplicate rows
+1. **Complex Nested Data Structures**: Columns containing dictionaries inside lists caused serialization errors,
+as PyArrow has limited support for deeply nested data structures.
 
-### The Fun Part: Data About Our Data <br/>(a.k.a. Numbers That Make Us Feel Productive)
+2. **Mixed Data Types**: Columns with inconsistent data types across rows couldn't be properly serialized.
 
+3. **Type Conversion Issues**: 
+   - Simply using Pandas built in method `.astype(object)` didn't resolve the serialization problems.
+   - Converting to strings `.astype(string)` created an interesting problem. The framework was allocating memory for each 
+string creating multiple dtypes inside our column. Preventing using pyarrow engine to save the data.
+   
+---
+### Solution:
+   - For simple lists containing only strings, we used the native `Python list `
+   - For complex structures (lists containing dictionaries),  we turned each dictionary into a JSON string using `json.dumps()`.
+After data processing we ended up saving the string inside a `Python list`
+
+---
+### Where to Find the Final Dataset
+
+The cleaned and processed dataset is available in the Release folder of this repository. 
+You can find it in [Release](https://github.com/ImperaLuna/veridion_product_deduplication_challenge/releases/tag/v1.0.0).
+
+---
+## Food for thought
+
+Columns `description` and `product_summary` contain a bit of information describing the products. In most cases this 
+information is not enough to make relevant decisions. However, there are a few cases where these columns contain enough
+relevant information, such as: product numbers that miss from relevant column or years, to make a decision if rows should
+be merged together or not. 
+
+### Possible Solutions:
+1. Use regex for patter extraction
+2. Build some kind of NLP model 
+
+## The Fun Part: Data About Our Data <br/><span style="font-size: 0.9rem; font-weight: bold;">(a.k.a. Numbers That Make Us Feel Productive)</span>
 
 ###### DataFrame Comparison Summary
 
@@ -174,12 +231,21 @@ Description and how it can be used to determine non duplicate rows
 | Rows                | 21,946   | 19,054 | -2,892     | -13.18%    |
 | Columns             | 31       | 27     | -4         | -12.90%    |
 | Size (MB)           | 10.72    | 6.91   | -3.82      | -35.59%    |
-| Processing Time (s) | 15.22    | 0.61   | -14.72     | 96.02%     |
+| Processing Time (s) | 15.22    | 0.61   | -14.72     |  96.02%    |
+
+### How did we optimize the processing
+
+
+The optimized code improves performance by implementing a "process only what's necessary" approach.
+Instead of running expensive merge operations on the entire dataset, it first identifies which rows actually have duplicates
+and only processes those specific subsets.
+
+Additionally, I learned that utilizing `.copy()` method is better for memory efficiency rather than making operations
+in-place. Initially I believed that avoiding copying the dataframe would save on memory however, but seems like my 
+assumption was wrong, Pandas creating internal copies anyways, but also forcing reindexing operations.
 
 
 
-### Where to Find the Final Dataset
 
-The cleaned and processed dataset is available in the Release folder of this repository. 
-You can find it in[https://github.com/ImperaLuna/veridion_product_deduplication_challenge/releases/tag/v1.0.0](Release).
+
 
