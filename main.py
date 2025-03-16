@@ -24,32 +24,7 @@ def load_data() -> Optional[pd.DataFrame]:
         return None
 
 
-def clean_data(df: Optional[pd.DataFrame]) -> Optional[pd.DataFrame]:
-    """
-    Cleans the provided DataFrame by processing energy_efficiency column.
 
-    Args:
-        df (Optional[pd.DataFrame]): The DataFrame to clean
-
-    Returns:
-        Optional[pd.DataFrame]: The cleaned DataFrame or None if input was None
-    """
-    if df is None:
-        return None
-
-    # Create a copy to avoid modifying the original DataFrame
-    cleaned_df = df.copy()
-
-    # Process the energy_efficiency column
-    cleaned_df['energy_efficiency'] = cleaned_df['energy_efficiency'].apply(
-        lambda x: (
-            []
-            if x is None or (isinstance(x, list) and x == [None])
-            else np.array([x]) if not isinstance(x, list) else np.array(x)
-        )
-    )
-
-    return cleaned_df
 
 
 def main() -> None:

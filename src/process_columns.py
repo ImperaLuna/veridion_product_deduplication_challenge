@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 def merge_and_drop_descriptions(df):
     """
@@ -64,22 +65,50 @@ def drop_columns(df, columns):
     return df
 
 
+def clean_energy_efficiency(df):
+    """
+    Cleans the provided DataFrame by processing energy_efficiency column.
+
+    Args:
+        df (Optional[pd.DataFrame]): The DataFrame to clean
+
+    Returns:
+        Optional[pd.DataFrame]: The cleaned DataFrame or None if input was None
+    """
+    cleaned_df = df.copy()
+
+    # Process the energy_efficiency column
+    cleaned_df['energy_efficiency'] = cleaned_df['energy_efficiency'].apply(
+        lambda x: (
+            []
+            if x is None or (isinstance(x, list) and x == [None])
+            else np.array([x]) if not isinstance(x, list) else np.array(x)
+        )
+    )
+
+    return cleaned_df
+
 def clean_columns(df):
     """
-    Executes all column cleaning functions in a single operation.
-    """
-    # Pre-check if columns exist to avoid errors
-    required_columns = ['product_summary', 'description', 'materials',
-                        'ingredients', 'product_name', 'manufacturing_year']
-    existing_columns = [col for col in required_columns if col in df.columns]
+    Executes all column cleaning functions in a single operation:
+    1. Merges product_summary and description into product_description
+    2. Combines materials and ingredients into components
+    3. Cleans energy_efficiency data
+    4. Drops product_name and manufacturing_year columns
 
+    Parameters:
+    df (pandas.DataFrame): The input DataFrame with columns to clean
+
+    Returns:
+    pandas.DataFrame: The modified DataFrame with transformed columns
+    """
     if 'product_summary' in df.columns and 'description' in df.columns:
         merge_and_drop_descriptions(df)
-
     if 'materials' in df.columns and 'ingredients' in df.columns:
         combine_materials_ingredients(df)
 
-    # Drop remaining columns in a single operation
+    clean_energy_efficiency(df)
+
     columns_to_drop = [col for col in ['product_name', 'manufacturing_year']
                        if col in df.columns]
     if columns_to_drop:
