@@ -39,29 +39,59 @@ possible future data requirements into my analysis.
 
 * Columns `root_domain` and `page_url`, since `page_url` is a more descriptive for a product and `root_domain` can be 
 pretty easily extracted from `page_url` I considered dropping `root_domain`. However, it ended up remaining on the dataset
-because it's a good column to check for products with the same name on multiple domains. 
+because it's a good column to check for products with the same name on multiple domains, and if we remove it after merging rows
+we are not saving in computation power, only storage space.
+  * Kept columns : `root_domain` and `page_url`
+
 
 * Columns `product_summary` and `description` using cosine similarity algorithm we determined a 69.51% similarity between
 the two columns. With all of the above in mind I decided to merge the 2 columns into one by keeping the longest string
 assuming it provides the most details about a product.
+  * New column : `product_description` 
+
 
 * Columns `product_name` and `product_title` using cosine similarity algorithm we determined a 71.54% similarity between
 the 2 columns, for this specific case I decided to keep the product_title since it appears to provide a better description
 of the product.
+  * Kept column : `product_title`  
 
-* Column `manufacturing_year` in our dataset has only one value `-1`, with the assumption that this is basically the equivalent
-of `None` I assume the best approach would be to delete.
+
+* Column `manufacturing_year` in our dataset has only one value `-1` across the entire dataset, with the assumption that 
+this is basically the equivalent of `None` I assume the best approach would be to delete, the only argument for keeping 
+it would be "future proofing".
+  * Deleted column : `manufacturing_year` 
+
 
 * Columns `materials` and `ingredients` these two columns have the same data type, and seem to be a pretty similar "description"
-of the product, with the only difference being that one is edible and one is not :). However since we don't know the usage
-of the dataset and there seem to be a clear distinction between them, I decided the best approach is to keep them both. 
+of the product, with the only difference being that one is edible and one is not. Normally I would keep this two columns
+as is since there is a clear distinction between the data, however since we don't know the usage of the dataset I decided
+to merge them into a single column.
+  * After checking for rows that contain information for in both columns we identified 0 such cases. Meaning we could 
+merge the columns and save a bit of space. 
+  * New column : `components`  
+
+###### Some things are better left untouched
 
 * Columns `purity`, `pressure_rating` and `power_rating` they are pretty similar with the above case, the interesting aspect
-about these columns is that they all contain dictionaries with the same keys. I planned to keep them as they were, 
-but since this is a challenge and the data structure allows, I decided to merge them and see what I could break. :D.
-  * Later edit – We _**did**_ break things. Even though all three columns share the same dictionary keys, the purity column 
+about these columns is that they all store dictionaries with the same keys. I planned to keep them as they were, 
+but since this is a challenge and the data structure allows, I decided to merge them and see what we could break.
+* Later edit – We _**did**_ break things. Even though all three columns share the same dictionary keys, the purity column 
 never contains a value for `key:unit`. Since `pressure_rating` and `power_rating` also occasionally lack a unit value,
-merging them results in ambiguous data. 
+merging them results in ambiguous data.
+  
+###### Possible solutions:
+  1. Assigning a descriptive value based on what column it came from for each instance of `key:unit - value:None`:
+* Example: `key:unit - value:power` to indicate which column the data originated from.
+* Downside: This still might not fully resolve ambiguity.
+
+2. Using a Nested Dictionary Format
+* Example: `[{"source": "power_rating", "data": {"qualitative": false ..."}}]`.
+* Downside: More complex structure
+  
+* Results: After testing the second approach, we only managed to reduce the file size by 0.17% (14,580 bytes), from 7.97 MB to 7.96 MB.
+
+* **Given the minimal impact on file size and the added complexity, it’s not worth merging these columns. 
+Keeping them separate ensures data clarity.**
 
 #### How do we merge rows?
 
@@ -139,11 +169,12 @@ Description and how it can be used to determine non duplicate rows
 
 ###### DataFrame Comparison Summary
 
-| Metric    | Original | Final    | Difference   | Percentage   |
-|-----------|----------|----------|--------------|--------------|
-| Rows      | 21,946   | 19,054   | -2,892       | -13.18%      |
-| Columns   | 31       | 28       | -3           | -9.68%       |
-| Size (MB) | 10.72    | 6.79     | -3.93        | -36.70%      |
+| Metric                 | Original | Final  | Difference | Percentage |
+|------------------------|----------|--------|------------|------------|
+| Rows                   | 21,946   | 19,054 | -2,892     | -13.18%    |
+| Columns                | 31       | 28     | -3         | -9.68%     |
+| Size (MB)              | 10.72    | 6.79   | -3.93      | -36.70%    |
+| Processing Speed (sec) |          |        |            |            |
 
 
 
