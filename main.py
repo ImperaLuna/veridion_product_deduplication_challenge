@@ -10,7 +10,7 @@ from tools.save_data import export_dataframe
 
 def optimized_merge(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Optimized merge that pre-filters data to only process rows with potential duplicates.
+    Product-centric optimized merge that consolidates products regardless of vendor.
 
     Args:
         df: Input DataFrame
@@ -18,40 +18,27 @@ def optimized_merge(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame with merged rows
     """
-    # Identify duplicate candidates for URL+title first
-    df['key1'] = df['page_url'] + '|' + df['product_title']
-    duplicates_mask1 = df.duplicated(subset=['key1'], keep=False)
+    # Create a product-focused key using only product_title
+    # You could include other product attributes here if needed
+    df['product_key'] = df['product_title']
+
+    # Identify duplicate products
+    duplicates_mask = df.duplicated(subset=['product_key'], keep=False)
 
     # Split the dataframe
-    duplicates1_df = df[duplicates_mask1].copy()
-    unique1_df = df[~duplicates_mask1].copy()
+    duplicates_df = df[duplicates_mask].copy()
+    unique_df = df[~duplicates_mask].copy()
 
     # Only merge the duplicates
-    if len(duplicates1_df) > 0:
-        merged1_df = merge_dataframe_rows(duplicates1_df, key_column='key1')
-        merged1_df = merged1_df.drop(columns=['key1'])
+    if len(duplicates_df) > 0:
+        merged_df = merge_dataframe_rows(duplicates_df, key_column='product_key')
+        merged_df = merged_df.drop(columns=['product_key'])
     else:
-        merged1_df = duplicates1_df.drop(columns=['key1'])
+        merged_df = duplicates_df.drop(columns=['product_key'])
 
     # Combine with unique rows
-    unique1_df = unique1_df.drop(columns=['key1'])
-    df_step1 = pd.concat([merged1_df, unique1_df])
-
-    # Now do the same for title+domain
-    df_step1['key2'] = df_step1['product_title'] + '|' + df_step1['root_domain']
-    duplicates_mask2 = df_step1.duplicated(subset=['key2'], keep=False)
-
-    duplicates2_df = df_step1[duplicates_mask2].copy()
-    unique2_df = df_step1[~duplicates_mask2].copy()
-
-    if len(duplicates2_df) > 0:
-        merged2_df = merge_dataframe_rows(duplicates2_df, key_column='key2')
-        merged2_df = merged2_df.drop(columns=['key2'])
-    else:
-        merged2_df = duplicates2_df.drop(columns=['key2'])
-
-    unique2_df = unique2_df.drop(columns=['key2'])
-    final_df = pd.concat([merged2_df, unique2_df])
+    unique_df = unique_df.drop(columns=['product_key'])
+    final_df = pd.concat([merged_df, unique_df])
 
     return final_df
 
@@ -70,7 +57,7 @@ def main() -> pd.DataFrame:
         pd.DataFrame: The deduplicated DataFrame
     """
     # Load the original data
-    df = pd.read_parquet(DataPaths.test_parquet)
+    df = pd.read_parquet(DataPaths.file_parquet_original)
 
     # Clean the columns
     df = clean_columns(df)
