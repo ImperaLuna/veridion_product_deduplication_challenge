@@ -52,42 +52,43 @@ For this task, I used Python with:
 #### Mistakes were made early:
 
 * **Initial assumption:** I approached this as a vendor-centric problem, treating products from different domains as
-different entities that shouldn't be merged. Going as far as raising and catching `ValueError` exceptions to maintain
-data integrity across domain boundaries.
+different entities that shouldn't be merged. 
+Going as far as raising and catching `ValueError` exceptions to maintain data integrity across domain boundaries.
 
-* **The reality:** After re-reading the task description more carefully, I realized this is actually a product-focused challenge. 
+* **The reality:** After re-reading the task description more carefully,
+I realized this is actually a product-focused challenge. 
 The goal is to consolidate identical products across different sources into unified, enriched entries.
 
 * **The fix:** Thankfully, my code was structured modular enough that pivoting required minimal changes.
 I adjusted the merging logic for `root_domain` and `page_url`, along with changing the duplicate detection logic.
 
-Sadly we are lacking enough information about the dataset and, its usage so below are more like educated guesses of
-what should we do rather than an actual "best-in-case" approach
+Sadly we are lacking enough information about the dataset and its usage, so below are more like educated guesses of
+what should we do rather than an actual "best-in-case" approach:
 
-* Column `energy_efficiency` is a dictionary, there are other columns in the dataset that contains dictionaries however 
-they are all located inside a list, in order to keep consistency over the data, and avoid complex logic to concatenate 
+* Column `energy_efficiency` is a dictionary. There are other columns in the dataset that contains dictionaries however 
+they are all located inside a list. In order to keep consistency over the data and avoid complex logic to concatenate 
 dictionaries we are going to convert it into a list also.
 
 #### Possibility of removing some columns
 
-Since one of the factors for this challenge is scalability we can consider removing some of the columns to improve memory
+Since one of the factors for this challenge is scalability, we can consider removing some of the columns to improve memory
 footprint and maybe even processing speed. I will also try my best to consider data integrity, possible data usages and 
 possible future data requirements into my analysis.
 
-* Columns `product_summary` and `description` using cosine similarity algorithm we determined a 69.51% similarity between
+* Columns `product_summary` and `description` using cosine similarity algorithm, we determined a 69.51% similarity between
 the two columns. With this in mind I decided to merge the 2 columns into one by keeping the longest string
 assuming it provides the most details about a product.
   * New column : `product_description`, both initial columns dropped.
 
 
-* Columns `product_name` and `product_title` using cosine similarity algorithm we determined a 71.54% similarity between
+* Columns `product_name` and `product_title` using cosine similarity algorithm, we determined a 71.54% similarity between
 the 2 columns, for this specific case I decided to keep the product_title since it appears to provide a better description
 of the product.
   * Kept column : `product_title` , dropped :`product_name`.
 
 
 * Column `manufacturing_year` in our dataset has only one value `-1` across the entire set, with the assumption that 
-this is basically the equivalent of `None` I assume the best approach would be to delete, the only argument for keeping 
+this is basically the equivalent of `None`. I assume the best approach would be to delete, the only argument for keeping 
 it would be "future proofing".
   * Dropped column : `manufacturing_year`.
 
@@ -116,7 +117,7 @@ merging them results in ambiguous data.
 
   2. Using a Nested Dictionary Format
 * Example: `[{"source": "power_rating", "data": {"qualitative": false ..."}}]`.
-* Downside: More complex structure
+* Downside: More complex structure.
   
 * Results: After testing the second approach, we only managed to reduce the file size by 0.17% (14,580 bytes), from 7.97 MB to 7.96 MB.
 
@@ -125,7 +126,7 @@ Keeping them separate ensures data clarity.**
 
 #### How do we merge rows?
 
-Since we know we are handling duplicate data I believe the first step should be figuring out what data types are we 
+Since we know we are handling duplicate data, I believe the first step should be figuring out what data types are we 
 working with and creating a function to properly merge the rows.
 
 * **Analysing Arrays**  
@@ -142,7 +143,7 @@ size to our dataset, but in return, we maintain data integrity.
 original data.
   2. Prioritize one of them based on something like: availability of the product, but without more information this seems
 like a bad idea.
-  3. Preserve only page_url since root_domain can be rather easily extracted from it.
+  3. Preserve only `page_url` since `root_domain` can be rather easily extracted from it.
   4. Preserve all unique `root_domain`, and for `page_url` we only preserve the shortest string for each domain. This 
 is probably the best option since it keeps essential information while removing tracking parameters, session IDs, 
 and other dynamic elements that don't represent the core product URL.
@@ -151,9 +152,9 @@ and other dynamic elements that don't represent the core product URL.
 | Data Type                            | Merging Strategy                                                                                                                            |
 |--------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
 | **strings**                          | Keep the longest string to retain maximum detail. Unless otherwise specified below.                                                         |
-| **unspsc<br/>(str)**                 | Concatenated different values with " \| " separator to preserve all potentially important data.                                             |                                                                                                                                  
-| **root_domain<br/>(str)**            | Concatenated different values with " \| " .                                                                                                 |
-| **page_url<br/>(str)**               | Concatenated different values with " \| " .                                                                                                 |
+| **unspsc<br/>(str)**                 | Concatenated unique values with " \| " separator to preserve all potentially important data.                                                |                                                                                                                                  
+| **root_domain<br/>(str)**            | Concatenated unique values with " \| " separator.                                                                                           |
+| **page_url<br/>(str)**               | Concatenated unique values with " \| " separator.  Keeping only the shortest url for each domain.                                           |
 | **eco_friendly<br/>(bool)**          | None and True → `True`, <br/>None and False → `False`, <br/>True and False → raise `ValueError`.                                            |
 | ~~**manufacturing_year<br/>(int)**~~ | ~~Use the maximum value, not ideal.<br/>If I knew how the data should look, I would implement date validation using the datetime library.~~ |
 | **lists**                            | Concatenate all unique elements into a single list.                                                                                         |
@@ -168,7 +169,7 @@ In this function we use ValueError to catch and handle cases where rows should n
 inconsistencies or data conflicts.
 
 It's worth mentioning column `brand`, I considered raising a `ValueError` here also since at the first glance it doesn't
-make much sense that the same product have multiple brands, however after checking the logged conflicts 
+make much sense that the same product have multiple brands., however after checking the logged conflicts 
 (that were quite numerous, around 600 rows). I've decided that the best approach is to merge this column by longest string.
 
 By raising this ValueError exceptions, we preserve data integrity and ensure that the merging process only takes place 
@@ -182,8 +183,8 @@ We are merging rows with product_title as the key column. I've considered creati
 columns for more precise matching, but after switching to a product-centric approach, product_title proved to be the most
 reliable single identifier.
 
-Custom keys (like combining brand+product_title) were explored but ultimately rejected because they introduced false negatives
-by over-segmenting what should be considered the same product
+Custom keys (like combining brand+product_title) were explored, ultimately rejected because they introduced false negatives
+by over-segmenting what should be considered the same product.
 
 ## Output
 
@@ -203,13 +204,13 @@ as PyArrow has limited support for deeply nested data structures.
 3. **Type Conversion Issues**: 
    - Simply using Pandas built in method `.astype(object)` didn't resolve the serialization problems.
    - Converting to strings `.astype(string)` created an interesting problem. The framework was allocating memory for each 
-string creating multiple dtypes based on memory allocation inside our column. Preventing using pyarrow engine to save the data.
+string creating multiple `dtypes` based on memory allocation inside our column. Preventing using pyarrow engine to save the data.
    
 
 ### Solution:
-   - For simple lists containing only strings, we used the native `Python list `
+   - For simple lists containing only strings, we used the native `Python list `.
    - For complex structures (lists containing dictionaries),  we turned each dictionary into a JSON string using `json.dumps()`.
-After data processing we ended up saving the string inside a `Python list`
+After data processing we ended up saving the string inside a `Python list`.
 
 
 ### Where to Find the Final Dataset
@@ -254,7 +255,7 @@ and only processes those specific subsets.
 
 Additionally, I learned that utilizing `.copy()` method is better for memory efficiency rather than making operations
 in-place. Initially I believed that avoiding copying the dataframe would save on memory. However, it seems like my 
-assumption was wrong, Pandas is not only creating internal copies anyways, but also forcing reindexing operations.
+assumption was wrong, Pandas is not only creating internal copies, but also forcing reindexing operations.
 
 
 
