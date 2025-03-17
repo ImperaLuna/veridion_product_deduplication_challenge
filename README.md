@@ -39,7 +39,9 @@ Each row represents partial attributes of a product.
 Just a heads-up: this isn't a step-by-step solution, but more like a battle log from the trenches of problem-solving
 (cleaned up just enough so readers don’t lose their minds).
 
-### Tools : For this task, I used Python with:
+### Tools : 
+
+For this task, I used Python with:
 * Jupyter Notebook: For proof of concept and data visualization
 * Csv files for better visualization
 * Pandas: For efficient data handling and manipulation
