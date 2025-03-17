@@ -235,7 +235,7 @@ development time. After careful consideration, I determined these enhancements w
 challenge and have documented this as an opportunity for future improvement.
 
 <h2 id="the-fun-part">The Fun Part: Data About Our Data <br/><span style="font-size: 0.9rem; font-weight: bold;">(a.k.a. Numbers That Make Us Feel Productive)</span></h2>
-###### DataFrame Comparison Summary
+
 
 | Metric              | Original | Final  | Difference | Percentage |
 |---------------------|----------|--------|------------|------------|
