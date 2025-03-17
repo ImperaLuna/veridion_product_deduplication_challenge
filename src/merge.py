@@ -50,36 +50,68 @@ def merge_unspsc(values: ValueSeries) -> Optional[str]:
     unique_values: List[str] = sorted(set(v for v in all_values if v and v != 'nan'))
     return '|'.join(unique_values) if unique_values else None
 
-def merge_root_domain(values: ValueSeries) -> Optional[str]:
-    """
-    Handle root_domain preservation, ensuring uniqueness.
 
-    Returns the single unique domain if all non-null values are the same,
-    otherwise raises an error to prevent merging conflicting domains.
+def merge_root_domain(values: ValueSeries) -> str:
+    """
+    Collect all unique root_domain values associated with a product
+    and join them with a pipe separator.
 
     Parameters:
-        values: Series of domain values to check
+        values: Series of domain values to collect
 
     Returns:
-        The single unique domain value, or None if no valid values
-
-    Raises:
-        ValueError: If multiple different domain values are found
+        String of unique domain values separated by " | ", empty string if no valid values
     """
     if values.empty:
-        return None
+        return ""
 
-    # Filter out nulls
+    # Filter out nulls and get unique values
     non_null: List[str] = [v for v in values if pd.notna(v) and v]
 
     if not non_null:
-        return None
+        return ""
 
-    # Check if all non-null values are the same
-    if len(set(non_null)) == 1:
-        return non_null[0]  # Return the single unique value
-    else:
-        raise ValueError('Different root_domain values')
+    # Return unique values joined with pipe separator
+    return " | ".join(sorted(set(non_null)))
+
+def merge_page_url(values: ValueSeries) -> str:
+    if values.empty:
+        return ""
+
+    # Filter out nulls
+    non_null = [v for v in values if pd.notna(v) and v]
+
+    if not non_null:
+        return ""
+
+    # Group URLs by domain and keep the shortest for each
+    from urllib.parse import urlparse
+
+    # Dictionary to store shortest URL for each domain
+    domain_to_shortest_url = {}
+
+    for url in non_null:
+        try:
+            parsed = urlparse(url)
+            domain = parsed.netloc
+
+            # Skip URLs that can't be parsed correctly
+            if not domain:
+                continue
+
+            # If we haven't seen this domain yet, or if this URL is shorter
+            if (domain not in domain_to_shortest_url or
+                    len(url) < len(domain_to_shortest_url[domain])):
+                domain_to_shortest_url[domain] = url
+        except:
+            # Skip any URLs that cause parsing errors
+            continue
+
+    # Return unique values joined with pipe separator
+    if not domain_to_shortest_url:
+        return ""
+
+    return " | ".join(sorted(domain_to_shortest_url.values()))
 
 def merge_text_longest(values: ValueSeries) -> Optional[str]:
     """
@@ -189,7 +221,6 @@ def get_scalar_aggregation_dict() -> Dict[str, Callable[[ValueSeries], Optional[
         'eco_friendly',  # column 10
         'manufacturing_year',  # column 17
         'description',  # column 30
-        'merged_description'  # new column
     ]
 
     agg_dict: Dict[str, Callable[[ValueSeries], Optional[ScalarValue]]] = {}
@@ -199,14 +230,13 @@ def get_scalar_aggregation_dict() -> Dict[str, Callable[[ValueSeries], Optional[
         elif col == 'root_domain':
             agg_dict[col] = merge_root_domain
         elif col == 'page_url':
-            agg_dict[col] = merge_text_shortest  # Now using shortest URL
-        elif col in ['product_title', 'product_summary', 'product_name', 'brand', 'description', 'merged_description']:
+            agg_dict[col] = merge_page_url
+        elif col in ['product_title', 'product_description', 'brand']:
             agg_dict[col] = merge_text_longest
-        elif col in ['product_description','eco_friendly']:
+        elif col in ['eco_friendly']:
             agg_dict[col] = merge_eco_friendly
         elif col == 'manufacturing_year':
             agg_dict[col] = merge_max_year
-
     return agg_dict
 
 # ========== Array Column Handling Functions ==========
@@ -405,7 +435,7 @@ def merge_dataframe_rows(df: pd.DataFrame, key_column: str) -> pd.DataFrame:
                 row_data[col] = agg_func(group[col])
             except ValueError as e:
                 error_message = str(e)
-                if error_message in ['Different root_domain values', 'Different eco_friendly values']:
+                if error_message in ['Different brand values', 'Different eco_friendly values']:
                     # Create error metadata
                     error_info = {
                         'error_message': error_message,
