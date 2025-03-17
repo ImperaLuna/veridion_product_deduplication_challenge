@@ -1,6 +1,5 @@
 # Product Data Deduplication
 
----
 ## Table of Contents
 - [Task](#task)
 - [Context](#context)
@@ -21,20 +20,20 @@
   - [How did we optimize the processing](#how-did-we-optimize-the-processing)
 
   
----
+
 ## Task
 
 The goal is to consolidate duplicate product entries into single, enriched records that maximize available information 
 while ensuring uniqueness.
 
----
+
 ## Context
 
 The dataset contains product details extracted from various web pages using LLMs. 
 This extraction process resulted in duplicate entries where the same product appears across different sources.
 Each row represents partial attributes of a product.
 
----
+
 ## Solution explanation / presentation
 
 Just a heads-up: this isn't a step-by-step solution, but more like a battle log from the trenches of problem-solving
@@ -183,7 +182,7 @@ reliable single identifier.
 
 Custom keys (like combining brand+product_title) were explored but ultimately rejected because they introduced false negatives
 by over-segmenting what should be considered the same product
----
+
 ## Output
 
 
@@ -216,7 +215,7 @@ After data processing we ended up saving the string inside a `Python list`
 The cleaned and processed dataset is available in the Release folder of this repository. 
 You can find it in [Release](https://github.com/ImperaLuna/veridion_product_deduplication_challenge/releases/tag/v1.0.0).
 
----
+
 ## Food for thought
 
 
