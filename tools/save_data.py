@@ -1,3 +1,22 @@
+"""
+DataFrame Export Utility
+-----------------------
+Provides functionality to export pandas DataFrames to CSV or Parquet format
+with consistent naming and compression settings.
+
+This module handles directory creation, appropriate file extensions,
+and standardizes the export process across the project.
+
+Usage:
+   from tools.save_data import export_dataframe
+
+   * Export as CSV (default)
+   csv_path = export_dataframe(df, output_dir, "my_dataset")
+
+   * Export as Snappy-compressed Parquet
+   parquet_path = export_dataframe(df, output_dir, "my_dataset", file_format="parquet")
+"""
+
 import pandas as pd
 from pathlib import Path
 
@@ -21,21 +40,18 @@ def export_dataframe(
         Path to the saved file
     """
 
-    # Validate inputs
     if not isinstance(output_dir, Path):
         output_dir = Path(output_dir)
 
     if file_format not in ['csv', 'parquet']:
         raise ValueError("file_format must be either 'csv' or 'parquet'")
 
-    # Create output directory if it doesn't exist
     output_dir.mkdir(exist_ok=True, parents=True)
 
-    # Create output path
     if file_format == 'csv':
         output_path = output_dir / f"{filename}.csv"
         df.to_csv(output_path, index=False)
-    else:  # parquet
+    else:
         output_path = output_dir / f"{filename}.snappy.parquet"
         df.to_parquet(output_path, compression='snappy')
 

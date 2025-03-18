@@ -1,14 +1,22 @@
 """
 Data Merging Module
+------------------------------
+Merges rows in a DataFrame that share the same key value,
+combining column values using appropriate aggregation functions.
 
-If you're importing this module, you most likely need the merge_dataframe_rows() function,
-which serves as the main entry point for the row merging functionality.
+Usage:
+  from src.merge import merge_dataframe_rows
 
+  * Merge rows with the same key value
+  merged_df = merge_dataframe_rows(dataframe, key_column="product_id")
 """
 
 import pandas as pd
 import numpy as np
 import json
+
+from urllib.parse import urlparse
+
 from typing import Dict, Callable, List, Union, Set, Optional, Any, TypeVar
 
 from src.path import DataPaths
@@ -35,21 +43,20 @@ def merge_unspsc(values: ValueSeries) -> Optional[str]:
         String of unique UNSPSC codes separated by '|', or None if no valid values
     """
     if values.empty:
-        return None
+        return ""
 
-    # Split any values that already contain '|'
+    # Split any values that already contain ' | '
     all_values: List[str] = []
     for val in values:
         if pd.notna(val):
-            if isinstance(val, str) and '|' in val:
-                all_values.extend([v.strip() for v in val.split('|')])
+            if isinstance(val, str) and ' | ' in val:
+                all_values.extend([v.strip() for v in val.split(' | ')])
             else:
                 all_values.append(str(val).strip())
 
     # Remove duplicates and empty values
     unique_values: List[str] = sorted(set(v for v in all_values if v and v != 'nan'))
-    return '|'.join(unique_values) if unique_values else None
-
+    return ' | '.join(unique_values) if unique_values else ""
 
 def merge_root_domain(values: ValueSeries) -> str:
     """
@@ -75,6 +82,15 @@ def merge_root_domain(values: ValueSeries) -> str:
     return " | ".join(sorted(set(non_null)))
 
 def merge_page_url(values: ValueSeries) -> str:
+    """
+       Merge page URLs by selecting the shortest URL for each domain.
+
+       Parameters:
+           values: Series of URL values to merge
+
+       Returns:
+           String of unique shortest URLs separated by " | ", empty string if no valid values
+       """
     if values.empty:
         return ""
 
@@ -83,9 +99,6 @@ def merge_page_url(values: ValueSeries) -> str:
 
     if not non_null:
         return ""
-
-    # Group URLs by domain and keep the shortest for each
-    from urllib.parse import urlparse
 
     # Dictionary to store shortest URL for each domain
     domain_to_shortest_url = {}
@@ -149,8 +162,19 @@ def merge_text_shortest(values: ValueSeries) -> Optional[str]:
     valid_strings: List[str] = [s for s in values if pd.notna(s) and isinstance(s, str) and s]
     return min(valid_strings, key=len) if valid_strings else None
 
-def merge_eco_friendly(values):
-    """Handle eco_friendly: preserve if unique, don't merge if conflicting"""
+def merge_eco_friendly(values: ValueSeries) -> Optional[bool]:
+    """
+    Handle eco_friendly: preserve if unique, don't merge if conflicting
+
+    Parameters:
+        values: Series of boolean values indicating eco-friendly status
+
+    Returns:
+        True if all non-null values are True
+        False if all non-null values are False
+        None if all values are null or empty
+        Raises ValueError if both True and False values are present
+    """
     if values.empty:
         return None
 
@@ -223,6 +247,7 @@ def get_scalar_aggregation_dict() -> Dict[str, Callable[[ValueSeries], Optional[
         'description',  # column 30
     ]
 
+    # Create a dictionary mapping column names (strings) to their specific aggregation functions
     agg_dict: Dict[str, Callable[[ValueSeries], Optional[ScalarValue]]] = {}
     for col in _scalar_columns:
         if col == 'unspsc':
@@ -241,7 +266,7 @@ def get_scalar_aggregation_dict() -> Dict[str, Callable[[ValueSeries], Optional[
 
 # ========== Array Column Handling Functions ==========
 
-def merge_array_simple(values: ValueSeries) -> list:
+def merge_array_simple(values: ValueSeries) -> List[Any]:
     """
     Merge arrays by concatenating all elements and removing duplicates.
 
@@ -259,8 +284,10 @@ def merge_array_simple(values: ValueSeries) -> list:
     # Collect all non-empty arrays
     all_elements: List[Any] = []
     for arr in values:
+        # Handle numpy arrays - convert to list before extending
         if isinstance(arr, np.ndarray) and len(arr) > 0:
             all_elements.extend(arr.tolist())  # Convert numpy array to list
+        # Handle Python lists directly
         elif isinstance(arr, list) and len(arr) > 0:
             all_elements.extend(arr)
 
@@ -268,7 +295,8 @@ def merge_array_simple(values: ValueSeries) -> list:
     try:
         unique_elements: List[Any] = list(set(all_elements))
     except TypeError:
-        # If elements are not hashable (like lists), try a different approach
+        # If set conversion fails (elements are unhashable like lists or dicts),
+        # fallback to manual deduplication
         unique_elements = []
         for item in all_elements:
             if item not in unique_elements:
@@ -276,7 +304,7 @@ def merge_array_simple(values: ValueSeries) -> list:
 
     return unique_elements  # Return as list instead of numpy array
 
-def merge_arrays_dictionary(values: ValueSeries) -> list:
+def merge_arrays_dictionary(values: ValueSeries) -> List[Any]:
     """
     Merge arrays containing dictionaries by combining all unique dictionaries.
 
@@ -321,7 +349,7 @@ def merge_arrays_dictionary(values: ValueSeries) -> list:
 
     return unique_dicts  # Return as list instead of numpy array
 
-def get_array_aggregation_dict() -> Dict[str, Callable[[ValueSeries], np.ndarray]]:
+def get_array_aggregation_dict() -> Dict[str, Callable[[ValueSeries], List[Any]]]:
     """
     Create a dictionary mapping array columns to their appropriate aggregation functions.
 
@@ -360,7 +388,7 @@ def get_array_aggregation_dict() -> Dict[str, Callable[[ValueSeries], np.ndarray
         'power_rating',                # column 27
     ]
 
-    agg_dict: Dict[str, Callable[[ValueSeries], np.ndarray]] = {}
+    agg_dict: Dict[str, Callable[[ValueSeries], List[Any]]] = {}
 
     for col in _simple_arrays:
         agg_dict[col] = merge_array_simple
@@ -376,7 +404,7 @@ def merge_dataframe_rows(df: pd.DataFrame, key_column: str) -> pd.DataFrame:
     Merge rows in a DataFrame that share the same key value.
     Logs any merging errors to a CSV file in the error folder for later analysis.
     Appends to the existing error log if one exists.
-    Handles missing columns gracefully by skipping them.
+    Handles missing columns by skipping them.
 
     Parameters:
         df: DataFrame to merge

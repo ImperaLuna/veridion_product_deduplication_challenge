@@ -19,25 +19,30 @@ def optimized_merge(df: pd.DataFrame) -> pd.DataFrame:
         DataFrame with merged rows
     """
     # Create a product-focused key using only product_title
-    # You could include other product attributes here if needed
     df['product_key'] = df['product_title']
 
     # Identify duplicate products
+    # keep=False marks all duplicates
     duplicates_mask = df.duplicated(subset=['product_key'], keep=False)
 
     # Split the dataframe
     duplicates_df = df[duplicates_mask].copy()
+    # Use the ~ operator to invert the duplicates_mask
     unique_df = df[~duplicates_mask].copy()
 
-    # Only merge the duplicates
+    # Process duplicates if they exist
     if len(duplicates_df) > 0:
         merged_df = merge_dataframe_rows(duplicates_df, key_column='product_key')
-        merged_df = merged_df.drop(columns=['product_key'])
     else:
-        merged_df = duplicates_df.drop(columns=['product_key'])
+        # If no duplicates, use empty DataFrame with same columns
+        merged_df = pd.DataFrame(columns=df.columns)
 
-    # Combine with unique rows
+    # Remove the temporary product_key from all DataFrames before concatenation
+    if 'product_key' in merged_df.columns:
+        merged_df = merged_df.drop(columns=['product_key'])
     unique_df = unique_df.drop(columns=['product_key'])
+
+    # Combine merged duplicates with unique products
     final_df = pd.concat([merged_df, unique_df])
 
     return final_df

@@ -1,9 +1,24 @@
+"""
+DataFrame Inspection Utility
+---------------------------
+Provides detailed information about pandas DataFrames with enhanced type detection
+and value preview capabilities.
+
+This utility goes beyond standard DataFrame.info() by:
+- Detecting actual data types inside string-encoded structures
+
+Usage:
+   from tools.type_check import print_detailed_info
+
+   print_detailed_info(my_dataframe)
+"""
+
 import ast
 import numpy as np
 import pandas as pd
 
 def get_actual_type(value):
-    """Get the actual type of a value, parsing strings if needed."""
+    """Get the actual type of value, parsing strings if needed."""
     # Handle numpy arrays and other iterable types that cause issues with isna()
     if isinstance(value, np.ndarray):
         return f"ndarray{value.shape}"
@@ -26,6 +41,10 @@ def get_actual_type(value):
     return type(value).__name__
 
 def print_detailed_info(df):
+    """
+    Displays a formatted table of DataFrame information with column names, actual data types,
+    and value previews for comprehensive data inspection.
+    """
     print(f"Original dataset: {len(df):,} rows")
     print(f"Number of columns in the DataFrame: {len(df.columns)}")
     print(f"Data columns (total {len(df.columns)} columns):")
