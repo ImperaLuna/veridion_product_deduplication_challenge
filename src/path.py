@@ -1,3 +1,22 @@
+"""
+DataPaths Module
+----------------
+Defines the project's directory structure and file paths for data processing.
+Organizes paths hierarchically for both Parquet data files and CSV visualization files,
+tracking the full data processing pipeline from raw inputs to final outputs.
+
+The module automatically ensures all directories exist when executed directly.
+
+Usage:
+   from path_config import DataPaths
+
+   # Access paths directly
+   raw_data = DataPaths.file_parquet_original
+
+   # Create all directories in the structure
+   DataPaths.ensure_dirs_exist()
+"""
+
 from pathlib import Path
 import types
 
