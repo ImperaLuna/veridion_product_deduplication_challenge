@@ -7,6 +7,9 @@
   - [Tools](#tools)
   - [Approach](#approach)
     - [Understanding the data and cleaning it (featuring a plot twist)](#understanding-the-data-and-cleaning-it-featuring-a-plot-twist)
+      - [Mistakes were made early](#mistakes-were-made-early)
+      - [Vendor-centric vs Product-centric approach](#vendor-centric-vs-product-centric-approach)
+    - [Standardizing Complex Data Structures](#standardizing-complex-data-structures)
     - [Possibility of removing some columns](#possibility-of-removing-some-columns)
     - [How do we merge rows?](#how-do-we-merge-rows)
     - [ValueErrors. Why do we raise them and how do we handle them](#valueerrors-why-do-we-raise-them-and-how-do-we-handle-them)
@@ -49,6 +52,9 @@ For this task, I used Python with:
 ### Approach:
 #### Understanding the data and cleaning it (featuring a plot twist)
 
+Sadly we are lacking enough information about the dataset and its usage, so below are more like educated guesses of
+what should we do rather than an actual "best-in-case" approach:
+
 #### Mistakes were made early:
 
 * **Initial assumption:** I approached this as a vendor-centric problem, treating products from different domains as
@@ -62,8 +68,37 @@ The goal is to consolidate identical products across different sources into unif
 * **The fix:** Thankfully, my code was structured modular enough that pivoting required minimal changes.
 I adjusted the merging logic for `root_domain` and `page_url`, along with changing the duplicate detection logic.
 
-Sadly we are lacking enough information about the dataset and its usage, so below are more like educated guesses of
-what should we do rather than an actual "best-in-case" approach:
+#### Vendor-centric vs Product-centric approach
+
+  1. **Vendor-centric:** This approach maintains separate entries for each product-vendor combination.
+
+How would a query look like:
+
+```
+   SELECT * FROM products WHERE root_domain = ? ;
+   SELECT * FROM products WHERE product_title = ?;
+```
+
+Pros: Allows greater versatility of the database, enabling efficient searches in both directions - finding what products
+are sold by a specific vendor AND retrieving all the information about a single product.
+
+Cons: Product information is fragmented across multiple rows. Requires aggregation to get a complete view of a product 
+across all vendors. Duplicates product attributes, increasing storage needs and potential for inconsistency.
+
+
+  2. **Product-centric:**
+
+How would a query look like:
+
+```SELECT * FROM products WHERE product_title = ?;```
+
+Pros: this provides complete information about a product, everything returned into a single row.
+
+Cons: Severely degrades vendor-based operations, if ever required. Vendor searches require inefficient pattern matching 
+and additional string parsing of concatenated fields, creating both performance bottlenecks and complexity in downstream 
+data processing.
+
+#### Standardizing Complex Data Structures
 
 * Column `energy_efficiency` is a dictionary. There are other columns in the dataset that contains dictionaries however 
 they are all located inside a list. In order to keep consistency over the data and avoid complex logic to concatenate 
